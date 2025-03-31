@@ -52,6 +52,7 @@ const SYSCALL_SPAWN: usize = 400;
 mod fs;
 mod process;
 
+use crate::task::current_task;
 use fs::*;
 use process::*;
 
@@ -59,6 +60,11 @@ use crate::fs::Stat;
 
 /// handle syscall exception with `syscall_id` and other arguments
 pub fn syscall(syscall_id: usize, args: [usize; 4]) -> isize {
+    let task = current_task().unwrap();
+    let mut inner = task.inner_exclusive_access();
+    inner.syscall_times[syscall_id] += 1;
+    drop(inner);
+    drop(task);
     match syscall_id {
         SYSCALL_OPEN => sys_open(args[1] as *const u8, args[2] as u32),
         SYSCALL_CLOSE => sys_close(args[0]),
