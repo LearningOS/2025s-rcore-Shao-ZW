@@ -113,6 +113,11 @@ impl VirtAddr {
     pub fn aligned(&self) -> bool {
         self.page_offset() == 0
     }
+
+    /// Form pa from va
+    pub fn form_pa(&self, pte: PageTableEntry) -> PhysAddr {
+        PhysAddr::from(pte.ppn().0 << PAGE_SIZE_BITS | self.page_offset())
+    }
 }
 impl From<VirtAddr> for VirtPageNum {
     fn from(v: VirtAddr) -> Self {
@@ -204,7 +209,7 @@ impl StepByOne for VirtPageNum {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 /// a simple range structure for type T
 pub struct SimpleRange<T>
 where
@@ -226,6 +231,9 @@ where
     }
     pub fn get_end(&self) -> T {
         self.r
+    }
+    pub fn contains(&self, other: Self) -> bool {
+        self.l <= other.l && self.r >= other.r
     }
 }
 impl<T> IntoIterator for SimpleRange<T>
